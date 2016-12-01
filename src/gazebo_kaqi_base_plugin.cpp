@@ -38,8 +38,14 @@ void GazeboKaqiBasePlugin::Reset()
     linear_velocity_ = 0;
     angular_velocity_ = 0;
 
+#if GAZEBO_MAJOR_VERSION > 4
     joints_[LEFT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
     joints_[RIGHT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
+#else
+    joints_[LEFT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
+    joints_[RIGHT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
+#endif
+
 }
 
 //
@@ -153,8 +159,14 @@ void GazeboKaqiBasePlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf 
     joints_.resize ( 4 );
     joints_[LEFT_WHEEL] = my_parent_->GetJoint(left_wheel_joint_name_);
     joints_[RIGHT_WHEEL] = my_parent_->GetJoint(right_wheel_joint_name_);
+#if GAZEBO_MAJOR_VERSION > 4
     joints_[LEFT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
     joints_[RIGHT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
+#else
+    joints_[LEFT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
+    joints_[RIGHT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
+#endif
+
     // Caster joints
     joints_[CASTER_ROTATE] = my_parent_->GetJoint(caster_rotate_joint_name_);
     joints_[CASTER_WHEEL] = my_parent_->GetJoint(caster_wheel_joint_name_);
@@ -174,8 +186,10 @@ void GazeboKaqiBasePlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf 
     linear_velocity_ = 0;
     angular_velocity_ = 0;
 
-    joints_[LEFT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
-    joints_[RIGHT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
+//    joints_[LEFT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
+//    joints_[RIGHT_WHEEL]->SetParam ( "fmax", 0, wheel_torque_ );
+    joints_[LEFT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
+    joints_[RIGHT_WHEEL]->SetMaxForce( 0, wheel_torque_ );
 
     // start custom queue for diff drive
     this->callback_queue_thread_ =
@@ -202,8 +216,14 @@ void GazeboKaqiBasePlugin::UpdateChild()
 {
     for ( int i = 0; i < 2; i++ )
     {
-      if ( fabs(wheel_torque_ -joints_[i]->GetParam ( "fmax", 0 )) > 1e-6 )
-        joints_[i]->SetParam ( "fmax", 0, wheel_torque_ );
+        if ( fabs(wheel_torque_ -joints_[i]->GetForce ( 0 )) > 1e-6 )
+        {
+#if GAZEBO_MAJOR_VERSION > 4
+            joints_[i]->SetParam ( "fmax", 0, wheel_torque_ );
+#else
+            joints_[i]->SetMaxForce( 0, wheel_torque_ );
+#endif
+        }
     }
 
     if ( odom_source_ == ENCODER )
@@ -231,8 +251,13 @@ void GazeboKaqiBasePlugin::UpdateChild()
                 ( fabs ( wheel_speed_[RIGHT_WHEEL] - current_speed[RIGHT_WHEEL] ) < 0.01 ) )
         {
             //if max_accel == 0, or target speed is reached
+#if GAZEBO_MAJOR_VERSION > 4
             joints_[LEFT_WHEEL]->SetParam ( "vel", 0, wheel_speed_[LEFT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
             joints_[RIGHT_WHEEL]->SetParam ( "vel", 0, wheel_speed_[RIGHT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
+#else
+            joints_[LEFT_WHEEL]->SetVelocity( 0, wheel_speed_[LEFT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
+            joints_[RIGHT_WHEEL]->SetVelocity( 0, wheel_speed_[RIGHT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
+#endif
         }
         else
         {
@@ -248,8 +273,13 @@ void GazeboKaqiBasePlugin::UpdateChild()
 
             // ROS_INFO("actual wheel speed = %lf, issued wheel speed= %lf", current_speed[LEFT], wheel_speed_[LEFT]);
             // ROS_INFO("actual wheel speed = %lf, issued wheel speed= %lf", current_speed[RIGHT],wheel_speed_[RIGHT]);
+#if GAZEBO_MAJOR_VERSION > 4
             joints_[LEFT_WHEEL]->SetParam ( "vel", 0, wheel_speed_instr_[LEFT_WHEEL] / ( wheel_diameter_ / 2.0 ) );
             joints_[RIGHT_WHEEL]->SetParam ( "vel", 0, wheel_speed_instr_[RIGHT_WHEEL] / ( wheel_diameter_ / 2.0 ) );
+#else
+            joints_[LEFT_WHEEL]->SetVelocity( 0, wheel_speed_[LEFT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
+            joints_[RIGHT_WHEEL]->SetVelocity( 0, wheel_speed_[RIGHT_WHEEL]/ ( wheel_diameter_ / 2.0 ) );
+#endif
         }
         last_update_time_+= common::Time ( update_period_ );
     }

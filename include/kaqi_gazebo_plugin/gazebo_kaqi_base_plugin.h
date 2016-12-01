@@ -1,4 +1,5 @@
 #include <boost/bind.hpp>
+#include <gazebo/gazebo_config.h>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/sensors/sensors.hh>
@@ -24,6 +25,7 @@
 #include <ros/callback_queue.h>
 
 #include <boost/algorithm/string.hpp>
+
 
 namespace gazebo
 {
